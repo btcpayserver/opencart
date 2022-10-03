@@ -6,6 +6,8 @@ jobs:
   tag:
     name: Build release
     runs-on: ubuntu-latest
+    permissions:
+      contents: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -28,4 +30,5 @@ jobs:
         with:
           artifacts: 'btcpay.ocmod.zip'
           removeArtifacts: true
+          allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
