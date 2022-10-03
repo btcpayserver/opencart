@@ -1,0 +1,31 @@
+name: Build release artifact.
+on:
+  push:
+    release:
+      types: [ published ]
+jobs:
+  tag:
+    name: Build release
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+      # Composer install not needed as long as we have the system/libraries/ directory committed.
+      #- name: Install Composer dependencies
+      #  uses: php-actions/composer@v6
+      #  with:
+      #    dev: no
+      #    php_version: 7.4
+      #    php_extensions: bcmath
+
+      - name: Create release artifact.
+        uses: thedoctor0/zip-release@master
+        with:
+          type: 'zip'
+          filename: 'btcpay.ocmod.zip'
+          exclusions: '*.git* *.github* composer.*'
+      - name: Upload artifact to release page.
+        uses: ncipollo/release-action@v1
+        with:
+          artifacts: 'btcpay.ocmod.zip'
+          token: ${{ secrets.GITHUB_TOKEN }}
