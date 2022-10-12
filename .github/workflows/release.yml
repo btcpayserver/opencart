@@ -23,12 +23,12 @@ jobs:
         uses: thedoctor0/zip-release@master
         with:
           type: 'zip'
-          filename: 'btcpay.ocmod.zip'
+          filename: 'btcpay-oc4.ocmod.zip'
           exclusions: '*.git* *.github* composer.*'
       - name: Upload artifact to release page.
         uses: ncipollo/release-action@v1
         with:
-          artifacts: 'btcpay4.ocmod.zip'
+          artifacts: 'btcpay-oc4.ocmod.zip'
           removeArtifacts: true
           allowUpdates: true
           token: ${{ secrets.GITHUB_TOKEN }}
