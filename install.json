@@ -1,6 +1,8 @@
 {
   "name": "BTCPay Server payment gateway",
   "version": "4.0.0",
+  "code": "btcpay",
+  "license": "MIT",
   "author": "BTCPay Server",
   "link": "https://btcpayserver.org"
 }
