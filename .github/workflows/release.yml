@@ -24,7 +24,7 @@ jobs:
         with:
           type: 'zip'
           filename: 'btcpay.ocmod.zip'
-          exclusions: '*.git* *.github* composer.*'
+          exclusions: '*.git* *.github* composer.* README.md'
       - name: Upload artifact to release page.
         uses: ncipollo/release-action@v1
         with:
