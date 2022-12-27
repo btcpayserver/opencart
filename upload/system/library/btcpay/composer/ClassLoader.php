@@ -50,29 +50,29 @@ class ClassLoader
      * @var array[]
      * @psalm-var array<string, array<string, int>>
      */
-    private $prefixLengthsPsr4 = [];
+    private $prefixLengthsPsr4 = array();
     /**
      * @var array[]
      * @psalm-var array<string, array<int, string>>
      */
-    private $prefixDirsPsr4 = [];
+    private $prefixDirsPsr4 = array();
     /**
      * @var array[]
      * @psalm-var array<string, string>
      */
-    private $fallbackDirsPsr4 = [];
+    private $fallbackDirsPsr4 = array();
 
     // PSR-0
     /**
      * @var array[]
      * @psalm-var array<string, array<string, string[]>>
      */
-    private $prefixesPsr0 = [];
+    private $prefixesPsr0 = array();
     /**
      * @var array[]
      * @psalm-var array<string, string>
      */
-    private $fallbackDirsPsr0 = [];
+    private $fallbackDirsPsr0 = array();
 
     /** @var bool */
     private $useIncludePath = false;
@@ -81,7 +81,7 @@ class ClassLoader
      * @var string[]
      * @psalm-var array<string, string>
      */
-    private $classMap = [];
+    private $classMap = array();
 
     /** @var bool */
     private $classMapAuthoritative = false;
@@ -90,7 +90,7 @@ class ClassLoader
      * @var bool[]
      * @psalm-var array<string, bool>
      */
-    private $missingClasses = [];
+    private $missingClasses = array();
 
     /** @var ?string */
     private $apcuPrefix;
@@ -98,7 +98,7 @@ class ClassLoader
     /**
      * @var self[]
      */
-    private static $registeredLoaders = [];
+    private static $registeredLoaders = array();
 
     /**
      * @param ?string $vendorDir
@@ -117,7 +117,7 @@ class ClassLoader
             return call_user_func_array('array_merge', array_values($this->prefixesPsr0));
         }
 
-        return [];
+        return array();
     }
 
     /**
@@ -493,11 +493,7 @@ class ClassLoader
     private function findFileWithExtension($class, $ext)
     {
         // PSR-4 lookup
-        $logicalPathPsr4 = ClassLoader . phpstrtr(
-            $class,
-            '\\',
-            DIRECTORY_SEPARATOR
-          );
+        $logicalPathPsr4 = strtr($class, '\\', DIRECTORY_SEPARATOR) . $ext;
 
         $first = $class[0];
         if (isset($this->prefixLengthsPsr4[$first])) {
@@ -526,18 +522,11 @@ class ClassLoader
         // PSR-0 lookup
         if (false !== $pos = strrpos($class, '\\')) {
             // namespaced class name
-            $logicalPathPsr0 = ClassLoader . phpsubstr(
-                $logicalPathPsr4,
-                0,
-                $pos + 1
-              );
+            $logicalPathPsr0 = substr($logicalPathPsr4, 0, $pos + 1)
+                . strtr(substr($logicalPathPsr4, $pos + 1), '_', DIRECTORY_SEPARATOR);
         } else {
             // PEAR-like class name
-            $logicalPathPsr0 = ClassLoader . phpstrtr(
-                $class,
-                '_',
-                DIRECTORY_SEPARATOR
-              );
+            $logicalPathPsr0 = strtr($class, '_', DIRECTORY_SEPARATOR) . $ext;
         }
 
         if (isset($this->prefixesPsr0[$first])) {

@@ -16,12 +16,12 @@ class ComposerStaticInit0630a220d429326d17ccb4047a5ba4f3
     public static $prefixDirsPsr4 = array (
         'BTCPayServer\\' => 
         array (
-            0 => __DIR__ . '/..',
+            0 => __DIR__ . '/..' . '/btcpayserver/btcpayserver-greenfield-php/src',
         ),
     );
 
     public static $classMap = array (
-        'Composer\\InstalledVersions' => __DIR__ . '/..',
+        'Composer\\InstalledVersions' => __DIR__ . '/..' . '/composer/InstalledVersions.php',
     );
 
     public static function getInitializer(ClassLoader $loader)
