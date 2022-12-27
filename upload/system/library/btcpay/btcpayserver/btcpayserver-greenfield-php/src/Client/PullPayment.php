@@ -43,6 +43,7 @@ class PullPayment extends AbstractClient
         string $currency,
         ?int $period,
         ?int $BOLT11Expiration,
+        ?bool $autoApproveClaims = false,
         ?int $startsAt,
         ?int $expiresAt,
         array $paymentMethods
@@ -60,6 +61,7 @@ class PullPayment extends AbstractClient
                 'currency' => $currency,
                 'period' => $period,
                 'BOLT11Expiration' => $BOLT11Expiration,
+                'autoApproveClaims' => $autoApproveClaims,
                 'startsAt' => $startsAt,
                 'expiresAt' => $expiresAt,
                 'paymentMethods' => $paymentMethods
@@ -156,7 +158,7 @@ class PullPayment extends AbstractClient
     ): bool {
         $url = $this->getApiUrl() . 'stores/' .
                     urlencode($storeId) . '/' . 'payouts/' .
-                    urlencode($payoutId);
+                    urlencode($payoutId) . '/mark-paid';
 
         $headers = $this->getRequestHeaders();
         $method = 'POST';
