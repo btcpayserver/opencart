@@ -108,7 +108,7 @@ class ControllerExtensionPaymentBTCPay extends Controller
 
             $this->model_checkout_order->addOrderHistory(
               $order_info['order_id'],
-              $this->config->get('payment_btcpay_order_status_id')
+              $this->config->get('payment_btcpay_new_status_id')
             );
 
             $this->response->redirect($invoice->getData()['checkoutLink']);
