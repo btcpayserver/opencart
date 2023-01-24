@@ -110,6 +110,16 @@
           </div>
 
           <div class="form-group">
+            <label class="col-sm-2 control-label" for="input-modal-mode">{{ entry_modal_mode }}</label>
+            <div class="col-sm-10">
+              <input type="checkbox" name="payment_btcpay_modal_mode" value="1" id="input-modal-mode" class="form-control" {% if payment_btcpay_modal_mode %} checked="checked" {% endif %} />
+              <div class="help-block">
+                {{ help_modal_mode }}
+              </div>
+            </div>
+          </div>
+
+          <div class="form-group">
             <label class="col-sm-2 control-label" for="input-new-status">{{ entry_new_status }}</label>
             <div class="col-sm-10">
               <select name="payment_btcpay_new_status_id" id="input-new-status" class="form-control">
