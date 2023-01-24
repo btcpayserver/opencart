@@ -1,0 +1,62 @@
+<script src="{{ modal_url }}"></script>
+
+<div class="buttons">
+    <div class="pull-right">
+        <button class="btn btn-primary btcpay-modal">{{ button_confirm }}</button>
+    </div>
+</div>
+
+<script>
+  $('button.btcpay-modal').click(function() {
+    $.post("{{ action }}", function (data) {
+      console.log(JSON.stringify(data));
+      if (data.invoiceId !== undefined) {
+        window.btcpay.setApiUrlPrefix('{{ btcpay_host }}');
+        window.btcpay.showInvoice(data.invoiceId);
+      }
+
+      let invoice_paid = false;
+
+      window.btcpay.onModalReceiveMessage(function (event) {
+        if (isObject(event.data)) {
+          console.log('invoiceId: ' + event.data.invoiceId);
+          console.log('status: ' + event.data.status);
+          if (event.data.status) {
+            switch (event.data.status) {
+              case 'complete':
+              case 'paid':
+                invoice_paid = true;
+                window.location='{{ success_link }}';
+                break;
+              case 'expired':
+                window.btcpay.hideFrame();
+                showError('{{ invoice_expired_text }}');
+                break;
+            }
+          }
+        } else { // handle event.data "loaded" "closed"
+          if (event.data === 'close') {
+            if (invoice_paid === true) {
+              window.location='{{ success_link }}';
+            }
+            showError('{{ invoice_closed_text }}');
+          }
+        }
+      });
+
+      const isObject = obj => {
+        return Object.prototype.toString.call(obj) === '[object Object]'
+      }
+
+    }).fail(function() {
+      const errFail = '<div class="alert alert-danger alert-dismissible">{{ invoice_failed_text }}<button type="button" class="close" data-dismiss="alert">×</button></div>';
+      $(this).closest('.panel-body').first().prepend(errFail);
+    });
+
+    const showError = err => {
+      const errFail = '<div class="alert alert-danger alert-dismissible">' + err + '<button type="button" class="close" data-dismiss="alert">×</button></div>';
+      $(this).closest('.panel-body').first().prepend(errFail);
+    }
+
+  });
+</script>

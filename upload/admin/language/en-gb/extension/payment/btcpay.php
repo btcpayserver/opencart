@@ -16,6 +16,7 @@ $_['entry_btcpay_storeid'] = 'BTCPay Store ID';
 $_['entry_webhook'] = 'Webhook Data';
 $_['entry_webhook_secret'] = 'Webhook Secret';
 $_['entry_webhook_delete'] = 'Delete Webhook';
+$_['entry_modal_mode'] = 'Modal/iFrame mode';
 $_['entry_total'] = 'Total';
 $_['entry_geo_zone'] = 'Geo Zone';
 $_['entry_sort_order'] = 'Sort Order';
@@ -33,6 +34,7 @@ $_['entry_debug_mode'] = 'Debug mode';
 
 $_['help_btcpay_url'] = 'The public URL of your BTCPay Server instance. e.g. https://demo.mainnet.btcpayserver.org. You need to have a BTCPay Server instance running, see "Requirements" for several options of deployment on our <a href="https://docs.btcpayserver.org/OpenCart" target="_blank" rel="noopener">setup guide</a>.';
 $_['help_webhook'] = 'The webhook will get created automatically after you entered BTCPay Server URL, API Key and Store ID. If you see this field filled with data (after you saved the form) all went well.';
+$_['help_modal_mode'] = 'If enabled the invoice will be shown in a modal/overlay (iFrame). Default behaviour is that the user will get redirected to BTCPay Server invoice page.';
 $_['help_webhook_delete'] = 'This is useful if you switch hosts or have problems with webhooks. When checked this will delete the webhook on OpenCart (and BTCPay Server if possible). Make sure to delete the webhook on BTCPay Server Store settings too if not done automatically. <strong>ATTENTION:</strong> You need to edit and <strong>save</strong> this settings page again so a new webhook gets created on BTCPay Server.';
 $_['help_total'] = 'The checkout total the order must reach before this payment method becomes active.';
 $_['help_debug_mode'] = 'If enabled debug output will be saved to the error logs found in System -> Maintenance -> Error logs. Should be disabled after debugging.';

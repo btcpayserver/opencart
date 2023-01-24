@@ -6,7 +6,7 @@ class ModelExtensionPaymentBTCPay extends Model {
   }
 
   public function getOrder($order_id) {
-    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "btcpay_order` WHERE `order_id` = '" . (int)$order_id . "' LIMIT 1");
+    $query = $this->db->query("SELECT * FROM `" . DB_PREFIX . "btcpay_order` WHERE `order_id` = '" . (int)$order_id . "' ORDER BY btcpay_order_id DESC LIMIT 1 ");
 
     return $query->row;
   }

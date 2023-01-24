@@ -87,6 +87,7 @@ class ControllerExtensionPaymentBTCPay extends Controller {
         'payment_btcpay_api_auth_token',
         'payment_btcpay_btcpay_storeid',
         'payment_btcpay_webhook',
+        'payment_btcpay_modal_mode',
         'payment_btcpay_webhook_delete',
         'payment_btcpay_new_status_id',
         'payment_btcpay_paid_status_id',
