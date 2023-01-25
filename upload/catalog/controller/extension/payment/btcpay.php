@@ -15,8 +15,6 @@ class ControllerExtensionPaymentBTCPay extends Controller
     {
         $this->load->language('extension/payment/btcpay');
         $this->load->model('checkout/order');
-
-
         $useModal = $this->config->get('payment_btcpay_modal_mode');
 
         $data['button_confirm'] = $this->language->get('button_confirm');
@@ -374,6 +372,8 @@ class ControllerExtensionPaymentBTCPay extends Controller
         $apiKey = $this->config->get('payment_btcpay_api_auth_token');
         $apiHost = $this->config->get('payment_btcpay_url');
         $apiStoreId = $this->config->get('payment_btcpay_btcpay_storeid');
+        $debug = $this->config->get('payment_btcpay_debug_mode');
+
         $client = new Invoice($apiHost, $apiKey);
 
         // Calculate order total.
@@ -385,14 +385,14 @@ class ControllerExtensionPaymentBTCPay extends Controller
           $order_info['order_id']
         );
 
-        $this->log->write(__FUNCTION__);
-        $this->log->write(print_r($btcpay_order, true));
+        if ($debug) {
+            $this->log->write(__FUNCTION__);
+            $this->log->write(print_r($btcpay_order, true));
+        }
 
         if (!empty($btcpay_order['invoice_id'])) {
             $existingInvoice = $client->getInvoice($apiStoreId, $btcpay_order['invoice_id']);
             $invoiceAmount = $existingInvoice->getAmount();
-            $isExpired = $existingInvoice->isExpired();
-            $sameTotal = $totalRounded === (float) $invoiceAmount->__toString();
 
             if ($existingInvoice->isExpired() === false &&
               $totalRounded === (float) $invoiceAmount->__toString()

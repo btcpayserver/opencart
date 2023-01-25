@@ -49,8 +49,7 @@
       }
 
     }).fail(function() {
-      const errFail = '<div class="alert alert-danger alert-dismissible">{{ invoice_failed_text }}<button type="button" class="close" data-dismiss="alert">×</button></div>';
-      $(this).closest('.panel-body').first().prepend(errFail);
+      showError('{{ invoice_failed_text }}');
     });
 
     const showError = err => {
