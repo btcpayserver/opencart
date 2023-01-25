@@ -19,7 +19,7 @@ class Btcpay extends \Opencart\System\Engine\Model
     public function getOrder(int $order_id): array
     {
         $query = $this->db->query(
-          "SELECT * FROM `" . DB_PREFIX . "btcpay_order` WHERE `order_id` = '" . $order_id . "' LIMIT 1"
+          "SELECT * FROM `" . DB_PREFIX . "btcpay_order` WHERE `order_id` = '" . $order_id . "' ORDER BY btcpay_order_id DESC LIMIT 1"
         );
 
         return $query->row;

@@ -16,6 +16,8 @@ class Btcpay extends \Opencart\System\Engine\Controller
         $this->load->language('extension/btcpay/payment/btcpay');
         $this->load->model('checkout/order');
 
+        $useModal = $this->config->get('payment_btcpay_modal_mode');
+
         $data['button_confirm'] = $this->language->get('button_confirm');
         $data['action'] = $this->url->link(
           'extension/btcpay/payment/btcpay|checkout',
@@ -23,102 +25,107 @@ class Btcpay extends \Opencart\System\Engine\Controller
           true
         );
 
-        return $this->load->view('extension/btcpay/payment/btcpay', $data);
+        if ($useModal) {
+            $host = $this->config->get('payment_btcpay_url');
+            $data['btcpay_host'] = $host;
+            $data['modal_url'] = $host . '/modal/btcpay.js';
+            $data['success_link'] = $this->url->link('checkout/success', '', true);
+            $data['invoice_expired_text'] = $this->language->get('invoice_expired_text');
+
+            return $this->load->view('extension/btcpay/payment/btcpay_modal', $data);
+        } else {
+            // Redirect.
+            return $this->load->view('extension/btcpay/payment/btcpay', $data);
+        }
     }
 
     public function checkout(): void
     {
         $this->load->model('checkout/order');
         $this->load->model('extension/btcpay/payment/btcpay');
+        $this->load->language('extension/btcpay/payment/btcpay');
 
         $debug = $this->config->get('payment_btcpay_debug_mode');
+        $useModal = $this->config->get('payment_btcpay_modal_mode');
 
         if ($debug) {
             $this->log->write('Entering checkout() of BTCPay catalog controller.');
+            $this->log->write('Session data:');
+            $this->log->write(print_r($this->session->data, true));
         }
 
-        $metadata = [];
-        $token = md5(uniqid(rand(), true));
-
+        if (!isset($this->session->data['order_id'])) {
+            $this->log->write('No session data order_id present, aborting.');
+            return;
+        }
 
         $order_info = $this->model_checkout_order->getOrder(
           $this->session->data['order_id']
         );
 
-        // Set included tax amount.
-        //// $metadata['taxIncluded'] = $order->get_cart_tax();
+        $invoiceId = '';
+        $checkoutLink = '';
 
-        // POS metadata.
-        ////todo: $metadata['posData'] = $this->preparePosMetadata( $order );
-
-        // Checkout options.
-        $checkoutOptions = new InvoiceCheckoutOptions();
-        $redirectUrl = $this->url->link(
-          'extension/btcpay/payment/btcpay|success',
-          ['token' => $token],
-          true
-        );
-
-        $checkoutOptions->setRedirectURL(htmlspecialchars_decode($redirectUrl));
-        if ($debug) {
-            $this->log->write( 'Setting redirect url to: ' . $redirectUrl );
-        }
-
-        // Calculate total and format it properly.
-        $total = number_format(
-          $order_info['total'] * $this->currency->getvalue(
-            $order_info['currency_code']
-          ),
-          8,
-          '.',
-          ''
-        );
-        $amount = PreciseNumber::parseString(
-          $total
-        ); // unlike method signature suggests, it returns string.
-
-        // API credentials.
-        $apiKey = $this->config->get('payment_btcpay_api_auth_token');
-        $host = $this->config->get('payment_btcpay_url');
-        $storeId = $this->config->get('payment_btcpay_btcpay_storeid');
-
-        // Create the invoice on BTCPay Server.
-        $client = new Invoice($host, $apiKey);
-        try {
-            $invoice = $client->createInvoice(
-              $storeId,
-              $order_info['currency_code'],
-              $amount,
-              $order_info['order_id'],
-              null, // this is null here as we handle it in the metadata.
-              $metadata,
-              $checkoutOptions
-            );
-        } catch (\Throwable $e) {
-            $this->log->write($e->getMessage());
-        }
-
-        if ($invoice->getData()['id']) {
-            $this->model_extension_btcpay_payment_btcpay->addOrder([
-              'order_id' => $order_info['order_id'],
-              'token' => $token,
-              'invoice_id' => $invoice->getData()['id'],
-            ]);
-
-            $this->model_checkout_order->addHistory(
-              $order_info['order_id'],
-              $this->config->get('payment_btcpay_new_status_id'),
-              'BTCPay invoice id: ' . $invoice->getData()['id']
-            );
-
-            $this->response->redirect($invoice->getData()['checkoutLink']);
+        // First, check if we have an existing and not expired wallet and do not create a new one.
+        if ($existingInvoice = $this->orderHasExistingInvoice($order_info)) {
+            $invoiceId = $existingInvoice->getId();
+            $checkoutLink = $existingInvoice->getCheckoutLink();
+            if ($debug) {
+                $this->log->write('Found existing and not yet expired invoice: ' . $invoiceId);
+            }
         } else {
+            // Create the invoice on BTCPay Server.
+            $token = md5(uniqid(rand(), true));
+            if ($newInvoice = $this->createInvoice($order_info, $token)) {
+                $invoiceId = $newInvoice->getId();
+                $checkoutLink = $newInvoice->getCheckoutLink();
+
+                // Add invoiceId to the btcpay order table.
+                $this->model_extension_btcpay_payment_btcpay->addOrder([
+                  'order_id' => $order_info['order_id'],
+                  'token' => $token,
+                  'invoice_id' => $invoiceId,
+                ]);
+
+                $this->model_checkout_order->addHistory(
+                  $order_info['order_id'],
+                  $this->config->get('payment_btcpay_new_status_id'),
+                  'BTCPay invoice id: ' . $newInvoice->getId()
+                );
+
+                /* TODO: wip have BTCPay Server invoice link in customer comments, needs option.
+                // Add user facing comment with a link to BTCPay Server invoice:
+                $this->model_checkout_order->addHistory(
+                  $order_info['order_id'],
+                  $this->config->get('payment_btcpay_new_status_id'),
+                  $this->language->get(
+                    'order_payment_link'
+                  ) . '<a href="' . $newInvoice->getCheckoutLink() . '" target="_blank">' . $newInvoice->getCheckoutLink() . '</a>',
+                  true
+                );
+                */
+
+            }
+        }
+
+        if (empty($invoiceId)) {
             $this->log->write(
               "Order #" . $order_info['order_id'] . " is not valid or something went wrong. Please check BTCPay Server API request logs."
             );
             $this->response->redirect(
               $this->url->link('checkout/checkout', '', true)
             );
+        }
+
+        // Handle invoice in modal or redirect to BTCPay Server.
+        if ($useModal) {
+            // Return JSON data for Javascript to process.
+            $data['invoiceId'] = $invoiceId;
+            $this->response->addHeader('Content-Type: application/json');
+            $this->response->setOutput(json_encode($data));
+        } else {
+            // Redirect to BTCPay Server.
+            $this->response->redirect($checkoutLink);
         }
     }
 
@@ -136,11 +143,13 @@ class Btcpay extends \Opencart\System\Engine\Controller
 
         if ($debug) {
             $this->log->write('Entering success callback / redirect page.');
+            $this->log->write('SESSION data: ');
+            $this->log->write(print_r($this->session->data, true));
         }
 
-        if ($order_id = $this->session->data['order_id']) {
+        if (isset($this->session->data['order_id'])) {
             $order = $this->model_extension_btcpay_payment_btcpay->getOrder(
-              $order_id
+              $this->session->data['order_id']
             );
 
             // Check if token is present and valid.
@@ -149,7 +158,7 @@ class Btcpay extends \Opencart\System\Engine\Controller
                 $this->request->get['token']
               ) !== 0) {
                 if ($debug) {
-                    $this->log->write('Redirect to success page had no valid token.');
+                    $this->log->write('Redirect to home page, had no valid token.');
                 }
                 $this->response->redirect(
                   $this->url->link('common/home', '', true)
@@ -162,7 +171,7 @@ class Btcpay extends \Opencart\System\Engine\Controller
 
         } else {
             if ($debug) {
-              $this->log->write('Redirect to success page valid order id or session expired.');
+              $this->log->write('Redirect to home page, no valid order id or session expired.');
             }
             $this->response->redirect(
               $this->url->link('common/home', '', true)
@@ -332,11 +341,111 @@ class Btcpay extends \Opencart\System\Engine\Controller
     /**
      * Check webhook signature to be a valid request.
      */
-    public function validWebhookRequest(string $signature, string $requestData): bool {
+    protected function validWebhookRequest(string $signature, string $requestData): bool {
         if ($whData = $this->config->get('payment_btcpay_webhook')) {
             return Webhook::isIncomingWebhookRequestValid($requestData, $signature, $whData['secret']);
         }
         return false;
+    }
+
+    protected function createInvoice(array $order_info, string $token): ?\BTCPayServer\Result\Invoice {
+        // API credentials.
+        $apiKey = $this->config->get('payment_btcpay_api_auth_token');
+        $apiHost = $this->config->get('payment_btcpay_url');
+        $apiStoreId = $this->config->get('payment_btcpay_btcpay_storeid');
+        $debug = $this->config->get('payment_btcpay_debug_mode');
+
+        $client = new Invoice($apiHost, $apiKey);
+
+        // Checkout options.
+        $checkoutOptions = new InvoiceCheckoutOptions();
+        $redirectUrl = $this->url->link(
+          'extension/btcpay/payment/btcpay|success',
+          ['token' => $token],
+          true
+        );
+
+        $checkoutOptions->setRedirectURL(htmlspecialchars_decode($redirectUrl));
+        if ($debug) {
+            $this->log->write( 'Setting redirect url to: ' . $redirectUrl );
+        }
+
+        // Metadata.
+        $metadata = [];
+
+        $amount = $this->prepareOrderTotal($order_info['total'], $order_info['currency_code']);
+
+        // Create the invoice on BTCPay Server.
+        try {
+            $invoice = $client->createInvoice(
+              $apiStoreId,
+              $order_info['currency_code'],
+              $amount,
+              $order_info['order_id'],
+              null, // this is null here as we handle it in the metadata.
+              $metadata,
+              $checkoutOptions
+            );
+
+            return $invoice;
+        } catch (\Throwable $e) {
+            $this->log->write($e->getMessage());
+        }
+
+        return null;
+    }
+
+    /**
+     * Check if the order already has an invoice id and it is still not expired.
+     */
+    protected function orderHasExistingInvoice(array $order_info): ? \BTCPayServer\Result\Invoice {
+        // API credentials.
+        $apiKey = $this->config->get('payment_btcpay_api_auth_token');
+        $apiHost = $this->config->get('payment_btcpay_url');
+        $apiStoreId = $this->config->get('payment_btcpay_btcpay_storeid');
+        $debug = $this->config->get('payment_btcpay_debug_mode');
+
+        $client = new Invoice($apiHost, $apiKey);
+
+        // Calculate order total.
+        $total = $this->prepareOrderTotal($order_info['total'], $order_info['currency_code']);
+        // Round to 2 decimals to avoid mismatch.
+        $totalRounded = round((float) $total->__toString(), 2);
+
+        $btcpay_order = $this->model_extension_btcpay_payment_btcpay->getOrder(
+          $order_info['order_id']
+        );
+
+        if ($debug) {
+            $this->log->write(__FUNCTION__);
+            $this->log->write(print_r($btcpay_order, true));
+        }
+
+        if (!empty($btcpay_order['invoice_id'])) {
+            $existingInvoice = $client->getInvoice($apiStoreId, $btcpay_order['invoice_id']);
+            $invoiceAmount = $existingInvoice->getAmount();
+
+            if ($existingInvoice->isExpired() === false &&
+              $totalRounded === (float) $invoiceAmount->__toString()
+            ) {
+                return $existingInvoice;
+            }
+        }
+
+        return null;
+    }
+
+    protected function prepareOrderTotal($total, $currencyCode): \BTCPayserver\Util\PreciseNumber {
+        // Calculate total and format it properly.
+        $total = number_format(
+          $total * $this->currency->getvalue(
+            $currencyCode
+          ),
+          8,
+          '.',
+          ''
+        );
+        return PreciseNumber::parseString($total);
     }
 
 }
