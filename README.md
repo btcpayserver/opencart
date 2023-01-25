@@ -14,6 +14,6 @@ Please let us always know your OpenCart, BTCPay extension, PHP versions. You can
 
 ## Development
 
-OpenCart 4 development happens on the `master` branch and OpenCart 3 is maintained on the `3.x` branch but does not receive any new features.
+OpenCart 4 development happens on the `master` branch and OpenCart 3 is maintained on the `3.x` branch but is mostly in maintenance mode.
 
 

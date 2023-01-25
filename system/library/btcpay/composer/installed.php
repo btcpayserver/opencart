@@ -3,7 +3,7 @@
         'name' => 'btcpayserver/opencart',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '33b11b8b7d68ef8b3abf1a49c808aed5d6d6e189',
+        'reference' => '9b81bc6e2a4afa9c81bdb28bd2da3964fe9a0e38',
         'type' => 'opencart-extension',
         'install_path' => __DIR__ . '/../../../../',
         'aliases' => array(),
@@ -22,7 +22,7 @@
         'btcpayserver/opencart' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '33b11b8b7d68ef8b3abf1a49c808aed5d6d6e189',
+            'reference' => '9b81bc6e2a4afa9c81bdb28bd2da3964fe9a0e38',
             'type' => 'opencart-extension',
             'install_path' => __DIR__ . '/../../../../',
             'aliases' => array(),
