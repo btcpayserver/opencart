@@ -13,6 +13,8 @@
       if (data.invoiceId !== undefined) {
         window.btcpay.setApiUrlPrefix('{{ btcpay_host }}');
         window.btcpay.showInvoice(data.invoiceId);
+      } else {
+          showError('{{ invoice_failed_text }}');
       }
       let invoice_paid = false;
       window.btcpay.onModalReceiveMessage(function (event) {

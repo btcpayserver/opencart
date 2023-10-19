@@ -1,3 +1,6 @@
+{% if error_warning %}
+  <div class="alert alert-danger">{{ error_warning }}</div>
+{% endif %}
 <form action="{{ action }}" method="post">
   <div class="buttons">
     <div class="text-end">

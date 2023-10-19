@@ -25,6 +25,13 @@ class Btcpay extends \Opencart\System\Engine\Controller
           true
         );
 
+        if (isset($this->session->data['error_warning'])) {
+          $data['error_warning'] = $this->session->data['error_warning'];
+          unset($this->session->data['error_warning']);
+        } else {
+          $data['error_warning'] = '';
+        }
+
         if ($useModal) {
             $host = $this->config->get('payment_btcpay_url');
             $data['btcpay_host'] = $host;
@@ -62,6 +69,16 @@ class Btcpay extends \Opencart\System\Engine\Controller
         $order_info = $this->model_checkout_order->getOrder(
           $this->session->data['order_id']
         );
+
+        if (empty($order_info)) {
+          if ($debug) {
+            $this->log->write('Could not load order passed by session, order id: ' . $this->session->data['order_id']);
+          }
+          $this->session->data['error_warning'] = $this->language->get('session_checkout_order_error');
+          $this->response->redirect(
+            $this->url->link('checkout/checkout', '', true)
+          );
+        }
 
         $invoiceId = '';
         $checkoutLink = '';
