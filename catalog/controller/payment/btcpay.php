@@ -390,6 +390,12 @@ class Btcpay extends \Opencart\System\Engine\Controller
         // Metadata.
         $metadata = [];
 
+        // The code required for the "Send the email to the buyer, if email was provided to the invoice" option in Store Email rules to work.
+        $buyerEmail = $order_info['email'] ?? '';
+		if (!empty($buyerEmail)) {
+			$metadata = ['buyerEmail' => $buyerEmail];
+        }
+
         $amount = $this->prepareOrderTotal($order_info['total'], $order_info['currency_code']);
 
         // Create the invoice on BTCPay Server.
