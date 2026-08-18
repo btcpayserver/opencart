@@ -3,7 +3,7 @@
         'name' => 'btcpayserver/opencart',
         'pretty_version' => 'dev-master',
         'version' => 'dev-master',
-        'reference' => '9b81bc6e2a4afa9c81bdb28bd2da3964fe9a0e38',
+        'reference' => '8d27778ced6af53e3537979b42a4d4ae3c3222b4',
         'type' => 'opencart-extension',
         'install_path' => __DIR__ . '/../../../../',
         'aliases' => array(),
@@ -11,9 +11,9 @@
     ),
     'versions' => array(
         'btcpayserver/btcpayserver-greenfield-php' => array(
-            'pretty_version' => 'v1.3.6',
-            'version' => '1.3.6.0',
-            'reference' => 'cc9ab93a8ecda8a8158b717f11ff37dfa5ab8962',
+            'pretty_version' => 'v2.9.1',
+            'version' => '2.9.1.0',
+            'reference' => 'a3004b382bebd13b391a16901a4bd4926e1975b9',
             'type' => 'library',
             'install_path' => __DIR__ . '/../btcpayserver/btcpayserver-greenfield-php',
             'aliases' => array(),
@@ -22,7 +22,7 @@
         'btcpayserver/opencart' => array(
             'pretty_version' => 'dev-master',
             'version' => 'dev-master',
-            'reference' => '9b81bc6e2a4afa9c81bdb28bd2da3964fe9a0e38',
+            'reference' => '8d27778ced6af53e3537979b42a4d4ae3c3222b4',
             'type' => 'opencart-extension',
             'install_path' => __DIR__ . '/../../../../',
             'aliases' => array(),

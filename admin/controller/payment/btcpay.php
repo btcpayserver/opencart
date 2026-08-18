@@ -26,17 +26,17 @@ class Btcpay extends \Opencart\System\Engine\Controller {
     $data['geo_zones'] = $this->model_localisation_geo_zone->getGeoZones();
 
     if (isset($this->error['warning'])) {
-			$data['error_warning'] = $this->error['warning'];
-		} else {
-			$data['error_warning'] = '';
-		}
+      $data['error_warning'] = $this->error['warning'];
+    } else {
+      $data['error_warning'] = '';
+    }
 
     if (isset($this->session->data['success'])) {
-			$data['success'] = $this->session->data['success'];
+      $data['success'] = $this->session->data['success'];
       unset($this->session->data['success']);
-		} else {
-			$data['success'] = '';
-		}
+    } else {
+      $data['success'] = '';
+    }
 
     $data['breadcrumbs'] = [];
     $data['breadcrumbs'][] = array(
@@ -55,9 +55,7 @@ class Btcpay extends \Opencart\System\Engine\Controller {
     $fields = [
         'payment_btcpay_status',
         'payment_btcpay_url',
-        'payment_btcpay_api_auth_token',
         'payment_btcpay_btcpay_storeid',
-        'payment_btcpay_webhook',
         'payment_btcpay_webhook_delete',
         'payment_btcpay_modal_mode',
         'payment_btcpay_new_status_id',
@@ -77,11 +75,25 @@ class Btcpay extends \Opencart\System\Engine\Controller {
     // Process our fields to be sure they are displayed.
     foreach ($fields as $field) {
       if (isset($this->request->post[$field])) {
-  			$data[$field] = $this->request->post[$field];
-  		} else {
-  			$data[$field] = $this->config->get($field);
-  		}
+        $data[$field] = $this->request->post[$field];
+      } else {
+        $data[$field] = $this->config->get($field);
+      }
     }
+
+    // Existing secrets must never be sent to the browser. An empty API-key
+    // field means "keep the configured value" when saving.
+    $data['payment_btcpay_api_auth_token'] = '';
+    $data['payment_btcpay_has_api_auth_token'] = (bool)$this->config->get('payment_btcpay_api_auth_token');
+    $storedWebhook = $this->config->get('payment_btcpay_webhook');
+    $data['payment_btcpay_webhook'] = [
+        'id' => is_array($storedWebhook) && isset($storedWebhook['id']) ? (string)$storedWebhook['id'] : '',
+        'url' => is_array($storedWebhook) && isset($storedWebhook['url']) ? (string)$storedWebhook['url'] : '',
+    ];
+    $data['payment_btcpay_insecure_http'] = stripos(
+        trim((string)$data['payment_btcpay_url']),
+        'http://'
+    ) === 0;
 
     $data['payment_btcpay_sort_order'] = isset($this->request->post['payment_btcpay_sort_order']) ?
             $this->request->post['payment_btcpay_sort_order'] :  $this->config->get('payment_btcpay_sort_order');
@@ -94,8 +106,7 @@ class Btcpay extends \Opencart\System\Engine\Controller {
   }
 
   protected function validate($messages): array {
-
-      $this->load->language('extension/btcpay/payment/btcpay');
+    $this->load->language('extension/btcpay/payment/btcpay');
     if (!$this->user->hasPermission('modify', 'extension/btcpay/payment/btcpay')) {
       $messages['error'] = $this->language->get('error_permission');
     }
@@ -105,9 +116,9 @@ class Btcpay extends \Opencart\System\Engine\Controller {
     }
 
     if (!isset($messages['error'])) {
-        $host = $this->request->post['payment_btcpay_url'];
-        $apiKey = $this->request->post['payment_btcpay_api_auth_token'];
-        $storeId = $this->request->post['payment_btcpay_btcpay_storeid'];
+        $host = (string)($this->request->post['payment_btcpay_url'] ?? '');
+        $apiKey = (string)($this->request->post['payment_btcpay_api_auth_token'] ?? '');
+        $storeId = (string)($this->request->post['payment_btcpay_btcpay_storeid'] ?? '');
 
         try {
             $client = new Store($host, $apiKey);
@@ -131,12 +142,25 @@ class Btcpay extends \Opencart\System\Engine\Controller {
         $json = [];
         $redirect = false;
 
+        $storedApiKey = (string)$this->config->get('payment_btcpay_api_auth_token');
+        $submittedApiKey = isset($this->request->post['payment_btcpay_api_auth_token']) ?
+            trim((string)$this->request->post['payment_btcpay_api_auth_token']) : '';
+        $this->request->post['payment_btcpay_api_auth_token'] = $submittedApiKey !== '' ?
+            $submittedApiKey : $storedApiKey;
+
+        $storedWebhook = $this->config->get('payment_btcpay_webhook');
+        if (is_array($storedWebhook)) {
+            // The browser never receives the secret, so always retain webhook
+            // data from trusted server-side configuration unless it is deleted.
+            $this->request->post['payment_btcpay_webhook'] = $storedWebhook;
+        }
+
         $json = $this->validate($json);
 
         if (empty($json['error'])) {
-            $host = $this->request->post['payment_btcpay_url'];
-            $apiKey = $this->request->post['payment_btcpay_api_auth_token'];
-            $storeId = $this->request->post['payment_btcpay_btcpay_storeid'];
+            $host = (string)$this->request->post['payment_btcpay_url'];
+            $apiKey = (string)$this->request->post['payment_btcpay_api_auth_token'];
+            $storeId = (string)$this->request->post['payment_btcpay_btcpay_storeid'];
 
             // On saving we create a webhook if there is none yet.
             if ($this->webhookExists() === false) {
@@ -159,20 +183,7 @@ class Btcpay extends \Opencart\System\Engine\Controller {
                     $json['success'] = $this->language->get('notice_success_delete_webhook');
                     $redirect = true;
                 } else {
-                    // Need to convert existing webhook values back to array for storage.
-                    if (isset($this->request->post['payment_btcpay_webhook'])) {
-                        $whString = $this->request->post['payment_btcpay_webhook'];
-                        $whString = str_replace(['ID: ', 'SECRET: ', 'URL: '], '', $whString);
-                        $whArr = explode(' | ', $whString);
-                        if (count($whArr) === 3) {
-                            $whData = [
-                              'id' => $whArr[0],
-                              'secret' => $whArr[1],
-                              'url' => $whArr[2]
-                            ];
-                            $this->request->post['payment_btcpay_webhook'] = $whData;
-                        }
-                    }
+                    $this->request->post['payment_btcpay_webhook'] = $storedWebhook;
                 }
             }
         }

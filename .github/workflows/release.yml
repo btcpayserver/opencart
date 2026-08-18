@@ -10,25 +10,13 @@ jobs:
       contents: write
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
-      # Composer install not needed as long as we have the system/libraries/ directory committed.
-      #- name: Install Composer dependencies
-      #  uses: php-actions/composer@v6
-      #  with:
-      #    dev: no
-      #    php_version: 7.4
-      #    php_extensions: bcmath
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        with:
+          persist-credentials: false
 
       - name: Create release artifact.
-        uses: thedoctor0/zip-release@master
-        with:
-          type: 'zip'
-          filename: 'btcpay.ocmod.zip'
-          exclusions: '*.git* *.github* composer.* README.md'
+        run: zip -r btcpay.ocmod.zip install.json admin catalog system -x '*/.git*'
       - name: Upload artifact to release page.
-        uses: ncipollo/release-action@v1
-        with:
-          artifacts: 'btcpay.ocmod.zip'
-          removeArtifacts: true
-          allowUpdates: true
-          token: ${{ secrets.GITHUB_TOKEN }}
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: gh release upload "$GITHUB_REF_NAME" btcpay.ocmod.zip --clobber
