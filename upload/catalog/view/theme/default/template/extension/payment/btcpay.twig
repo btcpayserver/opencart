@@ -1,7 +1,55 @@
-<form action="{{ action }}" method="post">
+<form action="{{ action }}" method="post" id="btcpay-checkout-form" data-error="{{ invoice_failed_text|escape('html_attr') }}">
+  <div class="btcpay-checkout-error"></div>
   <div class="buttons">
     <div class="pull-right">
-      <input type="submit" value="{{ button_confirm }}" class="btn btn-primary" />
+      <button type="submit" class="btn btn-primary btcpay-submit">{{ button_confirm }}</button>
     </div>
   </div>
 </form>
+
+<script>
+  (function() {
+    const $form = $('#btcpay-checkout-form');
+    const $button = $form.find('.btcpay-submit');
+
+    const showError = message => {
+      const $alert = $('<div class="alert alert-danger alert-dismissible"><i class="fa fa-exclamation-circle"></i> <span></span><button type="button" class="close" data-dismiss="alert">&times;</button></div>');
+      $alert.find('span').text(message);
+      $form.find('.btcpay-checkout-error').empty().append($alert);
+    };
+
+    $form.on('submit', function(event) {
+      event.preventDefault();
+      $form.find('.btcpay-checkout-error').empty();
+
+      $.ajax({
+        url: $form.attr('action'),
+        type: 'post',
+        dataType: 'json',
+        data: { response: 'json' },
+        beforeSend: function() {
+          $button.button('loading');
+        },
+        complete: function() {
+          $button.button('reset');
+        },
+        success: function(data) {
+          if (data && typeof data.redirect === 'string' && data.redirect !== '') {
+            window.location.href = data.redirect;
+            return;
+          }
+
+          showError(data && typeof data.error === 'string'
+            ? data.error
+            : $form.attr('data-error'));
+        },
+        error: function(xhr) {
+          const data = xhr.responseJSON;
+          showError(data && typeof data.error === 'string'
+            ? data.error
+            : $form.attr('data-error'));
+        }
+      });
+    });
+  })();
+</script>

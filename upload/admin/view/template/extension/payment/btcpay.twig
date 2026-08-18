@@ -65,13 +65,19 @@
               <div class="help-block">
                 {{ help_btcpay_url }}
               </div>
+              <div id="warning-insecure-http" class="alert alert-warning{% if not payment_btcpay_insecure_http and not payment_btcpay_insecure_callback %} hidden{% endif %}">
+                <i class="fa fa-exclamation-triangle"></i> {{ warning_insecure_http }}
+              </div>
             </div>
           </div>
 
           <div class="form-group">
             <label class="col-sm-2 control-label" for="input-api-auth-token">{{ entry_api_auth_token }}</label>
             <div class="col-sm-10">
-              <input type="text" name="payment_btcpay_api_auth_token" value="{{ payment_btcpay_api_auth_token }}" placeholder="{{ entry_api_auth_token }}" id="input-api-auth-token" class="form-control" />
+              <input type="password" name="payment_btcpay_api_auth_token" value="" placeholder="{{ entry_api_auth_token }}" id="input-api-auth-token" class="form-control" autocomplete="new-password" />
+              <div class="help-block">
+                {% if payment_btcpay_api_auth_token_set %}{{ help_api_auth_token_saved }}{% else %}{{ help_api_auth_token }}{% endif %}
+              </div>
             </div>
           </div>
 
@@ -87,11 +93,11 @@
               <label class="col-sm-2 control-label" for="input-webhook">{{ entry_webhook }}</label>
               <div class="col-sm-10">
                 {% if payment_btcpay_webhook.id %}
-                  {% set whData = 'ID: ' ~ payment_btcpay_webhook.id ~ ' | SECRET: ' ~ payment_btcpay_webhook.secret ~ ' | URL: ' ~ payment_btcpay_webhook.url %}
+                  {% set whData = 'ID: ' ~ payment_btcpay_webhook.id ~ ' | URL: ' ~ payment_btcpay_webhook.url %}
                 {% else %}
                   {% set whData = '-- webhook not configured yet --' %}
                 {% endif %}
-                <input readonly="readonly" type="text" name="payment_btcpay_webhook" value="{{ whData }}" placeholder="{{ entry_webhook }}" id="input-webhook" class="form-control" />
+                <input readonly="readonly" type="text" value="{{ whData }}" placeholder="{{ entry_webhook }}" id="input-webhook" class="form-control" />
                 <div class="help-block">
                   {{ help_webhook }}
                 </div>
@@ -229,7 +235,7 @@
             <div class="col-sm-10">
               <select name="payment_btcpay_expired_paidlate_status_id" id="input-expired-paidlate-status" class="form-control">
                 {% for order_status in order_statuses %}
-                {% if order_status.order_status_id == payment_btcpay_expired_partialpayment_status_id %}
+                {% if order_status.order_status_id == payment_btcpay_expired_paidlate_status_id %}
                 <option value="{{ order_status.order_status_id }}" selected="selected">{{ order_status.name }}</option>
                 {% else %}
                 <option value="{{ order_status.order_status_id }}">{{ order_status.name }}</option>
@@ -300,4 +306,16 @@
     </div>
   </div>
 </div>
+<script>
+  (function($) {
+    const insecureCallback = {{ payment_btcpay_insecure_callback ? 'true' : 'false' }};
+    const updateHttpWarning = function() {
+      const insecure = insecureCallback || /^http:\/\//i.test($.trim($('#input-btcpay-url').val()));
+      $('#warning-insecure-http').toggleClass('hidden', !insecure);
+    };
+
+    $('#input-btcpay-url').on('input change', updateHttpWarning);
+    updateHttpWarning();
+  })(jQuery);
+</script>
 {{ footer }}

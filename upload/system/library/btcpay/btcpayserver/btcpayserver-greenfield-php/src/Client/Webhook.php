@@ -232,7 +232,9 @@ class Webhook extends AbstractClient
         if ($requestBody && $btcpaySigHeader) {
             $expectedHeader = 'sha256=' . hash_hmac('sha256', $requestBody, $secret);
 
-            if ($expectedHeader === $btcpaySigHeader) {
+            // Backport the timing-safe comparison used by upstream v2.9.1
+            // without raising the OpenCart 3 extension's PHP requirement.
+            if (hash_equals($expectedHeader, $btcpaySigHeader)) {
                 return true;
             }
         }
