@@ -14,13 +14,19 @@
         window.btcpay.setApiUrlPrefix('{{ btcpay_host }}');
         window.btcpay.showInvoice(data.invoiceId);
       } else {
-          showError('{{ invoice_failed_text }}');
+          showError(data.error !== undefined ? data.error : '{{ invoice_failed_text }}');
       }
       let invoice_paid = false;
       window.btcpay.onModalReceiveMessage(function (event) {
         if (isObject(event.data)) {
           console.log('invoiceId: ' + event.data.invoiceId);
           console.log('status: ' + event.data.status);
+          // Current BTCPay versions include the invoice id in status messages.
+          // Ignore messages for another invoice while retaining compatibility
+          // with older versions that did not include it.
+          if (event.data.invoiceId !== undefined && event.data.invoiceId !== data.invoiceId) {
+            return;
+          }
           if (event.data.status) {
             switch (event.data.status) {
               case 'complete':

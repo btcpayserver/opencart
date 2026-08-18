@@ -3,3 +3,5 @@
 .php-cs-fixer.cache
 *.cache
 composer.lock
+/tests/.env
+/.claude/

@@ -43,7 +43,7 @@ class PullPayments
         $autoApproveClaims = false;
         $startsAt = null;
         $expiresAt = null;
-        $paymentMethods = ['BTC'];
+        $paymentMethods = ['BTC-CHAIN'];
 
         try {
             $client = new PullPayment($this->host, $this->apiKey);
@@ -113,7 +113,7 @@ class PullPayments
 
     public function approvePayout()
     {
-        $payoutId ='';
+        $payoutId = '';
         try {
             $client = new PullPayment($this->host, $this->apiKey);
             var_dump($client->approvePayout(
@@ -163,7 +163,7 @@ class PullPayments
         $pullPaymentId = '';
         $destination = '';
         $amount = PreciseNumber::parseString('0.000001');
-        $paymentMethod = '';
+        $paymentMethod = 'BTC-CHAIN';
 
         try {
             $client = new PullPayment($this->host, $this->apiKey);

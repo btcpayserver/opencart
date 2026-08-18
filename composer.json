@@ -3,7 +3,7 @@
     "description": "BTCPay Server plugin for OpenCart 4",
     "type": "opencart-extension",
     "require": {
-        "btcpayserver/btcpayserver-greenfield-php": "^1.3"
+        "btcpayserver/btcpayserver-greenfield-php": "^2.9.1"
     },
     "license": "MIT",
     "authors": [

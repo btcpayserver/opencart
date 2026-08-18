@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace BTCPayServer\Client;
 
+use BTCPayServer\Result\Invoice as ResultInvoice;
+use BTCPayServer\Result\InvoiceList;
 use BTCPayServer\Result\InvoicePaymentMethod;
+use BTCPayServer\Result\PullPayment as ResultPullPayment;
 use BTCPayServer\Util\PreciseNumber;
 
 class Invoice extends AbstractClient
@@ -17,7 +20,7 @@ class Invoice extends AbstractClient
         ?string $buyerEmail = null,
         ?array $metaData = null,
         ?InvoiceCheckoutOptions $checkoutOptions = null
-    ): \BTCPayServer\Result\Invoice {
+    ): ResultInvoice {
         $url = $this->getApiUrl() . 'stores/' . urlencode(
             $storeId
         ) . '/invoices';
@@ -60,7 +63,36 @@ class Invoice extends AbstractClient
         $response = $this->getHttpClient()->request($method, $url, $headers, $body);
 
         if ($response->getStatus() === 200) {
-            return new \BTCPayServer\Result\Invoice(
+            return new ResultInvoice(
+                json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR)
+            );
+        } else {
+            throw $this->getExceptionByStatusCode($method, $url, $response);
+        }
+    }
+
+    public function updateInvoice(
+        string $storeId,
+        string $invoiceId,
+        ?array $metaData = null
+    ): ResultInvoice {
+        $url = $this->getApiUrl() . 'stores/' . urlencode(
+            $storeId
+        ) . '/invoices/' . urlencode($invoiceId);
+        $headers = $this->getRequestHeaders();
+        $method = 'PUT';
+
+        $body = json_encode(
+            [
+                'metadata' => $metaData
+            ],
+            JSON_THROW_ON_ERROR
+        );
+
+        $response = $this->getHttpClient()->request($method, $url, $headers, $body);
+
+        if ($response->getStatus() === 200) {
+            return new ResultInvoice(
                 json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR)
             );
         } else {
@@ -71,41 +103,113 @@ class Invoice extends AbstractClient
     public function getInvoice(
         string $storeId,
         string $invoiceId
-    ): \BTCPayServer\Result\Invoice {
+    ): ResultInvoice {
         $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices/' . urlencode($invoiceId);
         $headers = $this->getRequestHeaders();
         $method = 'GET';
         $response = $this->getHttpClient()->request($method, $url, $headers);
 
         if ($response->getStatus() === 200) {
-            return new \BTCPayServer\Result\Invoice(json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR));
+            return new ResultInvoice(json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR));
         } else {
             throw $this->getExceptionByStatusCode($method, $url, $response);
         }
     }
 
-    public function getAllInvoices(string $storeId): \BTCPayServer\Result\InvoiceList
-    {
-        return $this->_getAllInvoicesWithFilter($storeId, null);
-    }
-
-    public function getInvoicesByOrderIds(string $storeId, array $orderIds): \BTCPayServer\Result\InvoiceList
-    {
-        return $this->_getAllInvoicesWithFilter($storeId, $orderIds);
-    }
-
-    private function _getAllInvoicesWithFilter(
+    public function getAllInvoices(
         string $storeId,
-        array $filterByOrderIds = null
-    ): \BTCPayServer\Result\InvoiceList {
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, null, null, null, null, null, $take, $skip);
+    }
+
+    public function getInvoicesByOrderIds(
+        string $storeId,
+        array $orderIds,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, $orderIds, null, null, null, null, $take, $skip);
+    }
+
+    public function getInvoicesByText(
+        string $storeId,
+        string $text,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, null, $text, null, null, null, $take, $skip);
+    }
+
+    public function getInvoicesByStatus(
+        string $storeId,
+        array $status,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, null, null, $status, null, null, $take, $skip);
+    }
+
+    public function getInvoicesByStartDate(
+        string $storeId,
+        int $startDate,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, null, null, null, $startDate, null, $take, $skip);
+    }
+
+    public function getInvoicesByEndDate(
+        string $storeId,
+        int $endDate,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
+        return $this->getAllInvoicesWithFilter($storeId, null, null, null, null, $endDate, $take, $skip);
+    }
+
+    /**
+     * @see https://docs.btcpayserver.org/API/Greenfield/v1/#operation/Invoices_GetInvoices
+     */
+    public function getAllInvoicesWithFilter(
+        string $storeId,
+        ?array $filterByOrderIds = null,
+        ?string $filterByText = null,
+        ?array $filterByStatus = null,
+        ?int $filterByStartDate = null,
+        ?int $filterByEndDate = null,
+        ?int $take = null,
+        ?int $skip = null
+    ): InvoiceList {
         $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices?';
         if ($filterByOrderIds !== null) {
             foreach ($filterByOrderIds as $filterByOrderId) {
                 $url .= 'orderId=' . urlencode($filterByOrderId) . '&';
             }
         }
+        if ($filterByText !== null) {
+            $url .= 'textSearch=' . urlencode($filterByText) . '&';
+        }
+        if ($filterByStatus !== null) {
+            foreach ($filterByStatus as $filterByStatusItem) {
+                $url .= 'status=' . urlencode($filterByStatusItem) . '&';
+            }
+        }
+        if ($filterByStartDate !== null) {
+            $url .= 'startDate=' . $filterByStartDate . '&';
+        }
+        if ($filterByEndDate !== null) {
+            $url .= 'endDate=' . $filterByEndDate . '&';
+        }
+        if ($take !== null) {
+            $url .= 'take=' . $take . '&';
+        }
+        if ($skip !== null) {
+            $url .= 'skip=' . $skip . '&';
+        }
 
-        // Clean URL
+        // Clean URL.
         $url = rtrim($url, '&');
         $url = rtrim($url, '?');
 
@@ -114,7 +218,7 @@ class Invoice extends AbstractClient
         $response = $this->getHttpClient()->request($method, $url, $headers);
 
         if ($response->getStatus() === 200) {
-            return new \BTCPayServer\Result\InvoiceList(
+            return new InvoiceList(
                 json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR)
             );
         } else {
@@ -128,7 +232,8 @@ class Invoice extends AbstractClient
     public function getPaymentMethods(string $storeId, string $invoiceId): array
     {
         $method = 'GET';
-        $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices/' . urlencode($invoiceId) . '/payment-methods';
+        $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices/'
+            . urlencode($invoiceId) . '/payment-methods';
         $headers = $this->getRequestHeaders();
         $response = $this->getHttpClient()->request($method, $url, $headers);
 
@@ -141,7 +246,7 @@ class Invoice extends AbstractClient
                 JSON_THROW_ON_ERROR
             );
             foreach ($data as $item) {
-                $item = new \BTCPayServer\Result\InvoicePaymentMethod($item);
+                $item = new InvoicePaymentMethod($item);
                 $r[] = $item;
             }
             return $r;
@@ -150,11 +255,15 @@ class Invoice extends AbstractClient
         }
     }
 
-    public function markInvoiceStatus(string $storeId, string $invoiceId, string $markAs): \BTCPayServer\Result\Invoice
+    /**
+     * Mark an invoice status.
+     *
+     * @see https://docs.btcpayserver.org/API/Greenfield/v1/#operation/Invoices_MarkInvoiceStatus
+     * @throws \JsonException
+     */
+    public function markInvoiceStatus(string $storeId, string $invoiceId, string $markAs): ResultInvoice
     {
-        $url = $this->getApiUrl() . 'stores/' . urlencode(
-            $storeId
-        ) . '/invoices/' . urlencode($invoiceId) . '/status';
+        $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices/' . urlencode($invoiceId) . '/status';
         $headers = $this->getRequestHeaders();
         $method = 'POST';
 
@@ -168,7 +277,52 @@ class Invoice extends AbstractClient
         $response = $this->getHttpClient()->request($method, $url, $headers, $body);
 
         if ($response->getStatus() === 200) {
-            return new \BTCPayServer\Result\Invoice(
+            return new ResultInvoice(
+                json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR)
+            );
+        } else {
+            throw $this->getExceptionByStatusCode($method, $url, $response);
+        }
+    }
+
+    /**
+     * Refund an invoice.
+     *
+     * @see https://docs.btcpayserver.org/API/Greenfield/v1/#operation/Invoices_Refund
+     * @throws \JsonException
+     */
+    public function refundInvoice(
+        string $storeId,
+        string $invoiceId,
+        ?string $refundVariant = 'CurrentRate',
+        ?string $paymentMethod = 'BTC',
+        ?string $name = null,
+        ?string $description = null,
+        ?float $subtractPercentage = 0.0,
+        ?PreciseNumber $customAmount = null,
+        ?string $customCurrency = null
+    ): ResultPullPayment {
+        $url = $this->getApiUrl() . 'stores/' . urlencode($storeId) . '/invoices/' . urlencode($invoiceId) . '/refund';
+        $headers = $this->getRequestHeaders();
+        $method = 'POST';
+
+        $body = json_encode(
+            [
+                'name' => $name,
+                'description' => $description,
+                'paymentMethod' => $paymentMethod,
+                'refundVariant' => $refundVariant,
+                'subtractPercentage' => $subtractPercentage,
+                'customAmount' => $customAmount?->__toString(),
+                'customCurrency' => $customCurrency
+            ],
+            JSON_THROW_ON_ERROR
+        );
+
+        $response = $this->getHttpClient()->request($method, $url, $headers, $body);
+
+        if ($response->getStatus() === 200) {
+            return new ResultPullPayment(
                 json_decode($response->getBody(), true, 512, JSON_THROW_ON_ERROR)
             );
         } else {
