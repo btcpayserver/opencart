@@ -134,10 +134,17 @@ class Btcpay extends \Opencart\System\Engine\Controller
                       'invoice_id' => $invoiceId,
                     ]);
 
+                    $invoiceUrl = htmlspecialchars(
+                        rtrim(trim((string)$this->config->get('payment_btcpay_url')), '/') . '/invoices/' . rawurlencode($invoiceId),
+                        ENT_QUOTES,
+                        'UTF-8'
+                    );
+
                     $this->model_checkout_order->addHistory(
                       $order_info['order_id'],
                       $this->config->get('payment_btcpay_new_status_id'),
-                      'BTCPay invoice id: ' . $newInvoice->getId()
+                      'BTCPay invoice id: ' . htmlspecialchars($invoiceId, ENT_QUOTES, 'UTF-8') . "\n" .
+                      'BTCPay invoice: <a href="' . $invoiceUrl . '" target="_blank" rel="noopener noreferrer">' . $invoiceUrl . '</a>'
                     );
 
                     /* TODO: wip have BTCPay Server invoice link in customer comments, needs option.
