@@ -16,6 +16,7 @@ class Btcpay extends \Opencart\System\Engine\Model {
 
     $defaults = [];
 
+    $defaults['payment_btcpay_send_customer_email'] = 0;
     $defaults['payment_btcpay_new_status_id'] = 1;
     $defaults['payment_btcpay_paid_status_id'] = 1;
     $defaults['payment_btcpay_settled_status_id'] = 2;
