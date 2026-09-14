@@ -58,6 +58,7 @@ class Btcpay extends \Opencart\System\Engine\Controller {
         'payment_btcpay_btcpay_storeid',
         'payment_btcpay_webhook_delete',
         'payment_btcpay_modal_mode',
+        'payment_btcpay_send_customer_email',
         'payment_btcpay_new_status_id',
         'payment_btcpay_paid_status_id',
         'payment_btcpay_settled_status_id',

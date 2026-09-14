@@ -759,6 +759,14 @@ class Btcpay extends \Opencart\System\Engine\Controller
         // Metadata.
         $metadata = [];
 
+        // Buyer email is used by BTCPay Server store email rules and is opt-in.
+        if ($this->config->get('payment_btcpay_send_customer_email')) {
+            $buyerEmail = trim((string)($order_info['email'] ?? ''));
+            if ($buyerEmail !== '') {
+                $metadata['buyerEmail'] = $buyerEmail;
+            }
+        }
+
         $amount = $this->prepareOrderTotal(
             $order_info['total'],
             $order_info['currency_code'],

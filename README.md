@@ -6,6 +6,12 @@ This free extension can be used with [OpenCart](https://www.opencart.com) versio
 
 You can find a detailed installation guide on how to setup the extension on our [OpenCart documentation](https://docs.btcpayserver.org/OpenCart/). 
 
+## Customer emails on invoices
+
+In OpenCart, go to **Extensions → Extensions → Payments → BTCPay Server** and enable **Send customer email to BTCPay Server** to add the order's customer email address to new invoices. This option is disabled by default, including for existing installations. It supplies the buyer email used by BTCPay Server's store email rules; configure those rules in your BTCPay Server store email settings to send emails to the buyer.
+
+**Privacy warning:** A leaked invoice ID or checkout link could expose the customer email address. Enable this option only if you need it for your email rules. Disabling it later does not remove email addresses already stored on existing invoices.
+
 ## Feedback 
 
 If you have issues or feature requests feel free to open an [issue](https://github.com/btcpayserver/opencart/issues) or join us on our [chat](https://chat.btcpayserver.org) or [telegram channel](https://t.me/btcpayserver). 
@@ -15,5 +21,4 @@ Please let us always know your OpenCart, BTCPay extension, PHP versions. You can
 ## Development
 
 OpenCart 4 development happens on the `master` branch and OpenCart 3 is maintained on the `3.x` branch but is mostly in maintenance mode.
-
 

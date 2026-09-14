@@ -124,6 +124,20 @@
             </div>
 
               <div class="row mb-3">
+                <label class="col-sm-2 col-form-label" for="input-send-customer-email">{{ entry_send_customer_email }}</label>
+                <div class="col-sm-10">
+                  <input type="hidden" name="payment_btcpay_send_customer_email" value="0" />
+                  <input type="checkbox" name="payment_btcpay_send_customer_email" value="1" id="input-send-customer-email" class="form-check mt-2" aria-describedby="help-send-customer-email warning-send-customer-email" {% if payment_btcpay_send_customer_email %} checked="checked" {% endif %} />
+                  <div id="help-send-customer-email" class="help-block mt-1">
+                    {{ help_send_customer_email }}
+                  </div>
+                  <div id="warning-send-customer-email" class="alert alert-warning mt-2">
+                    <i class="fas fa-exclamation-triangle" aria-hidden="true"></i> {{ warning_send_customer_email }}
+                  </div>
+                </div>
+              </div>
+
+              <div class="row mb-3">
                 <label class="col-sm-2 col-form-label" for="input-new-status">{{ entry_new_status }}</label>
                 <div class="col-sm-10">
                   <select name="payment_btcpay_new_status_id" id="input-new-status" class="form-select">
